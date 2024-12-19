@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: asiayo
+  labels:
+    app: mysql-slave
+  name: mysql-slave
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mysql-slave
+  template:
+    metadata:
+      labels:
+        app: mysql-slave
+    spec:
+      containers:
+        - name: slave-container
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: '2'
+              memory: 8Gi
+            limits:
+              cpu: '4'
+              memory: 16Gi
+          image: <your-choice>
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+          volumeMounts:
+            - name: slave-cnf-volume
+              readOnly: false
+              mountPath: /etc/mysql
+            - name: slave-data-volume
+              readOnly: false
+              mountPath: /var/lib/mysql-files
+      serviceAccount: default
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: mysql-slave
+                topologyKey: kubernetes.io/hostname
+      volumes:
+        - name: slave-cnf-volume
+          configMap:
+            name: mysql-slave-cnf
+            items:
+              - key: my.cnf
+                path: my.cnf
+        - name: slave-data-volume
+          persistentVolumeClaim:
+            claimName: mysql-pvc-slave
+  serviceName: mysql-slave

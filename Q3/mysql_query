@@ -1,0 +1,9 @@
+SELECT class.class
+FROM score
+JOIN class ON score.name = class.name
+WHERE score.score = (
+    SELECT DISTINCT score
+    FROM score
+    ORDER BY score DESC
+    LIMIT 1 OFFSET 1
+);

@@ -6,7 +6,7 @@ metadata:
     app: mysql-master
   name: mysql-master
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: mysql-master
