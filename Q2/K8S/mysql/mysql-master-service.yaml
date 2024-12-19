@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: asiayo
+  labels:
+    app: mysql-master
+  name: mysql-master
+spec:
+  sessionAffinity: ClientIP
+  selector:
+    app: mysql-master
+  ports:
+    - name: tcp-3306
+      protocol: TCP
+      port: 3306
+      targetPort: 3306
+    - name: tcp-33060
+      protocol: TCP
+      port: 33060
+      targetPort: 33060
+  clusterIP: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800

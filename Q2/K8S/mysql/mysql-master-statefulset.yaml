@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: asiayo
+  labels:
+    app: mysql-master
+  name: mysql-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-master
+  template:
+    metadata:
+      labels:
+        app: mysql-master
+    spec:
+      containers:
+        - name: master-container
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: '2'
+              memory: 8Gi
+            limits:
+              cpu: '4'
+              memory: 16Gi
+          image: <your-choice>
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+          volumeMounts:
+            - name: master-cnf-volume
+              readOnly: false
+              mountPath: /etc/mysql
+            - name: master-data-volume
+              readOnly: false
+              mountPath: /var/lib/mysql-files
+      serviceAccount: default
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: mysql-master
+                topologyKey: kubernetes.io/hostname
+      volumes:
+        - name: master-cnf-volume
+          configMap:
+            name: mysql-master-cnf
+            items:
+              - key: my.cnf
+                path: my.cnf
+        - name: master-data-volume
+          persistentVolumeClaim:
+            claimName: mysql-pvc-master
+  serviceName: mysql-master
